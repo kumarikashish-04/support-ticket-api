@@ -16,8 +16,11 @@ def resolve(db: Session, ticket_id: str, effort_logged: int) -> dict:
         raise ValueError("insufficient_effort", ticket.complexity, effort_logged)
     # No validation that effort_logged or overtime use STANDARD_EFFORT_BLOCKS
     overtime = effort_logged - ticket.complexity
-    ticket.quantity -= 1
-    ticket.queue.current_ticket_count -= 1
+    if ticket.quantity == 0:
+        db.delete(ticket)
+    if ticket.queue:
+        ticket.queue.current_ticket_count -= 1
+    # ticket.queue.current_ticket_count -= 1
     db.commit()
     db.refresh(ticket)
     return {
